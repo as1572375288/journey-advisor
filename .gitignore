@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Secrets / local config
+.env
+.env.*
+*.local
+
+# Node
+node_modules/
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+
+# WorkBuddy platform metadata (local only, not for public repo)
+_skillhub_meta.json
+_meta.json
+*.bak
+
+# Build / temp
+dist/
+build/
+*.tmp

@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TODO:带{人群}游{目的地}的{天数}天{主题}手册 · 出行随身手册</title>
+<!--
+  Journey Advisor · 途顾问 手机随身手册模板 v2.0
+  用法：整体复制 → 全文替换 TODO → 每个 Day 复制一个 <details> 块
+  每日路线图二选一（按 references/map-screenshots.md 的降级级别）：
+    · L1/L2 真实截图 → 用「A. 真实地图截图」块，img 指向 routes/final/final-DayN.png
+    · L4     固定示意图 → 用「B. 固定方位示意图」块，节点链必须闭环回住处（返程日到「到家」），
+                            底部必须写明「方位示意图 · 非真实路网截图 · 当天以手机导航为准」
+    · 严禁把 L4 示意图当真实截图交付（不标注 / 起像截图的名字 / 混进 routes/）
+-->
+<style>
+:root{
+  --bg:#f2f6f9; --card:#fff; --text:#16202b; --muted:#68737f; --faint:#98a3ae;
+  --sea:#0e7490; --sea2:#0891b2; --sea-bg:#e6f4f8;
+  --hot:#ea580c; --hot-bg:#fff2e8;
+  --warn:#b45309; --warn-bg:#fdf3e3;
+  --danger:#c62828; --danger-bg:#fdecec;
+  --ok:#15803d; --ok-bg:#e8f5ec;
+  --line:#e4eaef; --radius:16px;
+  --shadow:0 1px 2px rgba(16,32,44,.05), 0 10px 26px -12px rgba(16,32,44,.14);
+}
+[data-theme="dark"]{
+  --bg:#0f1318; --card:#181e26; --text:#e6ecf2; --muted:#9aa7b4; --faint:#6d7a87;
+  --sea:#38bdf8; --sea2:#22d3ee; --sea-bg:#12283a;
+  --hot:#fb923c; --hot-bg:#2e1c10;
+  --warn:#fbbf24; --warn-bg:#2c2312;
+  --danger:#f87171; --danger-bg:#2e1719;
+  --ok:#4ade80; --ok-bg:#12291c;
+  --line:#2a333d;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 26px -12px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.72;-webkit-text-size-adjust:100%;
+  font-size:15px;letter-spacing:.1px}
+
+/* 进度条 & 顶栏 */
+#prog{position:fixed;top:0;left:0;height:3px;width:0;z-index:60;
+  background:linear-gradient(90deg,var(--sea),var(--hot));transition:width .1s linear}
+.topbar{position:sticky;top:0;z-index:50;padding:9px 14px;display:flex;justify-content:space-between;
+  align-items:center;gap:10px;background:color-mix(in srgb,var(--card) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--line)}
+.topbar nav{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.topbar nav::-webkit-scrollbar{display:none}
+.topbar nav a{color:var(--muted);text-decoration:none;font-size:13px;white-space:nowrap;
+  padding:5px 11px;border-radius:999px;transition:.18s}
+.topbar nav a:hover{background:var(--sea-bg);color:var(--sea)}
+.topbar nav a.on{background:var(--sea);color:#fff;font-weight:600}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;
+  padding:5px 14px;cursor:pointer;font-size:13px;transition:.18s;white-space:nowrap}
+.btn:hover{border-color:var(--sea);color:var(--sea)}
+
+/* Hero —— 配色按目的地气质替换 --sea / --hot 即可 */
+.hero{position:relative;overflow:hidden;color:#fff;padding:34px 22px 26px;
+  border-radius:0 0 26px 26px;margin-bottom:18px;
+  background:linear-gradient(135deg,#0c4a6e 0%,#0e7490 45%,#0891b2 78%,#f97316 160%)}
+.hero::after{content:"";position:absolute;right:-70px;top:-90px;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.20),transparent 68%)}
+.hero::before{content:"";position:absolute;left:-40px;bottom:-110px;width:230px;height:230px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.13),transparent 70%)}
+.hero .inner{position:relative;z-index:2;max-width:880px;margin:0 auto}
+.hero .kicker{display:inline-block;font-size:12px;letter-spacing:2px;opacity:.85;
+  border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:2px 12px;margin-bottom:12px}
+.hero h1{font-size:26px;line-height:1.35;margin-bottom:12px;font-weight:700;letter-spacing:.3px}
+.hero .sub{font-size:13.5px;opacity:.94;line-height:1.9}
+.hero .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.hero .chips span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);
+  border-radius:999px;padding:4px 12px;font-size:12.5px}
+.hero .cd{margin-top:14px;display:inline-flex;align-items:center;gap:8px;font-size:13px;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:7px 14px}
+
+/* 布局 */
+.wrap{max-width:900px;margin:0 auto;padding:0 14px 70px}
+section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+h2{font-size:19px;margin-bottom:14px;display:flex;align-items:center;gap:9px;letter-spacing:.2px}
+h2::before{content:"";width:4px;height:17px;border-radius:2px;background:linear-gradient(var(--sea),var(--hot))}
+h3{font-size:15.5px;margin:18px 0 9px;color:var(--sea);display:flex;align-items:center;gap:6px}
+p{margin:7px 0}
+a{color:var(--sea)}
+b,strong{font-weight:600}
+
+/* 表格 */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0;
+  border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:460px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{background:var(--sea-bg);color:var(--text);font-weight:600;white-space:nowrap;border-bottom:1px solid var(--line)}
+tbody tr:nth-child(even){background:color-mix(in srgb,var(--sea-bg) 40%,transparent)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--sea-bg)}
+
+/* 提示条 */
+.callout{padding:11px 14px;border-radius:11px;font-size:13.5px;margin:11px 0;
+  border-left:3px solid currentColor;line-height:1.75}
+.warn{background:var(--warn-bg);color:var(--warn)}
+.danger{background:var(--danger-bg);color:var(--danger)}
+.ok{background:var(--ok-bg);color:var(--ok)}
+.info{background:var(--sea-bg);color:var(--sea)}
+.eat{background:var(--ok-bg);color:var(--ok)}
+.tag{display:inline-block;padding:0 7px;border-radius:20px;font-size:11px;vertical-align:middle;
+  white-space:nowrap;line-height:1.7;border:1px solid currentColor;opacity:.95}
+.t-ok{background:var(--ok-bg);color:var(--ok)}
+.t-ref{background:var(--warn-bg);color:var(--warn)}
+.t-tbd{background:var(--danger-bg);color:var(--danger)}
+
+/* 折叠块 */
+details{border:1px solid var(--line);border-radius:13px;margin:11px 0;background:var(--bg);overflow:hidden}
+details summary{cursor:pointer;padding:13px 15px;font-weight:600;list-style:none;font-size:14.5px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;transition:.18s}
+details summary::-webkit-details-marker{display:none}
+details summary:hover{background:var(--sea-bg)}
+details[open] summary{background:var(--sea-bg);border-bottom:1px solid var(--line)}
+details summary::after{content:"＋";margin-left:auto;color:var(--muted);font-weight:400}
+details[open] summary::after{content:"－"}
+.dbadge{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:26px;padding:0 9px;
+  border-radius:8px;background:linear-gradient(135deg,var(--sea),var(--sea2));color:#fff;
+  font-size:12.5px;font-weight:700;flex:none}
+details[open] .dbadge{background:linear-gradient(135deg,var(--hot),#fb923c)}
+.dtheme{font-weight:500;font-size:13.5px;color:var(--muted)}
+.dchip{font-size:11.5px;padding:1px 9px;border-radius:999px;background:var(--card);
+  border:1px solid var(--line);color:var(--muted);font-weight:400}
+.dchip.star{background:var(--hot-bg);border-color:var(--hot);color:var(--hot)}
+.dchip.today{background:var(--sea);border-color:var(--sea);color:#fff}
+details .body{padding:14px 15px 16px;font-size:14px}
+
+/* 每日路线图 —— L1/L2 真实截图 */
+.routemap{margin:12px 0;text-align:center}
+.routemap img{max-width:100%;height:auto;border-radius:10px;border:1px solid var(--line);display:block;margin:0 auto}
+.routemap .cap{font-size:11.5px;color:var(--faint);margin-top:6px}
+
+/* 每日路线图 —— L4 固定方位示意图 */
+.rmap{margin:12px 0 14px;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--card)}
+.rmap-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 13px;
+  background:linear-gradient(90deg,var(--sea-bg),transparent);border-bottom:1px solid var(--line)}
+.rmap-top b{font-size:13.5px}
+.rmap-top .meta{font-size:12px;color:var(--muted);margin-left:auto}
+.rmap-board{position:relative;padding:20px 14px 14px;overflow-x:auto;
+  background:
+    linear-gradient(180deg,color-mix(in srgb,var(--sea2) 9%,transparent),transparent 60%),
+    repeating-linear-gradient(0deg,transparent 0 27px,color-mix(in srgb,var(--sea) 8%,transparent) 27px 28px),
+    repeating-linear-gradient(90deg,transparent 0 27px,color-mix(in srgb,var(--sea) 8%,transparent) 27px 28px);
+  background-color:color-mix(in srgb,var(--sea-bg) 55%,var(--card))}
+.rmap-board .sea-tag{position:absolute;left:12px;top:6px;font-size:11px;color:var(--sea);
+  letter-spacing:1px;opacity:.85}
+.rmap-board .compass{position:absolute;right:12px;top:6px;width:26px;height:26px;border-radius:50%;
+  border:1px solid var(--sea);color:var(--sea);font-size:10px;display:flex;align-items:center;
+  justify-content:center;opacity:.8;font-weight:700}
+.rmap-chain{display:flex;align-items:flex-start;min-width:max-content;padding-top:6px}
+.rnode{width:96px;flex:none;text-align:center;position:relative}
+.rnode i{display:flex;align-items:center;justify-content:center;width:36px;height:36px;margin:0 auto 6px;
+  border-radius:50%;background:var(--card);border:2px solid var(--sea);font-size:17px;font-style:normal;
+  box-shadow:0 2px 6px rgba(14,116,144,.18)}
+.rnode.home i{border-color:var(--hot);box-shadow:0 2px 6px rgba(234,88,12,.22)}
+.rnode b{display:block;font-size:12px;font-weight:600;line-height:1.35}
+.rnode em{display:block;font-size:11px;color:var(--muted);font-style:normal;margin-top:2px}
+.rlink{flex:1;min-width:74px;padding-top:16px;position:relative;text-align:center}
+.rlink::before{content:"";position:absolute;left:0;right:0;top:22px;height:0;
+  border-top:2px solid var(--sea);opacity:.55}
+.rlink::after{content:"";position:absolute;right:2px;top:18px;border:5px solid transparent;
+  border-left-color:var(--sea);opacity:.75}
+.rlink .k{display:block;font-size:11.5px;font-weight:700;color:var(--sea);background:var(--card);
+  border:1px solid var(--line);border-radius:999px;padding:0 8px;position:relative;z-index:2;
+  width:max-content;margin:0 auto 2px}
+.rlink .m{display:block;font-size:10.5px;color:var(--muted);position:relative;z-index:2}
+.rmap-back{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted);
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rmap-back b{color:var(--hot)}
+.rmap-foot{padding:8px 13px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--bg)}
+.rmap-foot a{margin-left:auto;white-space:nowrap}
+/* 窄屏：节点链改竖排，避免横向溢出导致末端「回住处／到家」看不到 */
+@media (max-width:760px){
+  .rmap-chain{flex-direction:column;align-items:stretch;min-width:0}
+  .rnode{width:auto;display:grid;grid-template-columns:34px 1fr;
+    grid-template-areas:"ic nm" "ic tm";column-gap:10px;align-items:center;text-align:left;padding:3px 0}
+  .rnode i{grid-area:ic;width:32px;height:32px;margin:0;font-size:15px}
+  .rnode b{grid-area:nm;font-size:13px}
+  .rnode em{grid-area:tm;font-size:11px;margin:0}
+  .rlink{flex:none;min-width:0;padding:2px 0 2px 16px;text-align:left;
+    display:flex;align-items:center;gap:7px}
+  .rlink::before{left:15px;top:0;bottom:0;right:auto;width:0;height:auto;
+    border-top:none;border-left:2px solid var(--sea);opacity:.6}
+  .rlink::after{left:11px;top:auto;bottom:-1px;right:auto;border:5px solid transparent;
+    border-top-color:var(--sea);border-left-color:transparent;opacity:.8}
+  .rlink .k{margin:0;font-size:11px}
+  .rlink .m{font-size:10.5px}
+  .rmap-board::after{content:"↓ 自上而下即全程";position:absolute;right:11px;bottom:3px;
+    font-size:10.5px;color:var(--faint)}
+  .rmap-board{padding-bottom:22px}
+}
+
+/* 潮汐条 */
+.tbar{display:flex;align-items:center;gap:8px;min-width:120px}
+.tbar .track{flex:1;height:7px;border-radius:4px;background:var(--line);overflow:hidden}
+.tbar .fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--sea),var(--sea2))}
+.tbar.best .fill{background:linear-gradient(90deg,var(--hot),#fbbf24)}
+
+/* 预算 */
+.budget{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:12px 0}
+.budget .item{background:linear-gradient(160deg,var(--sea-bg),transparent);border:1px solid var(--line);
+  border-radius:13px;padding:13px;text-align:center}
+.budget .item b{display:block;font-size:21px;color:var(--sea);font-variant-numeric:tabular-nums}
+.budget .item span{font-size:12px;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.row input{padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);
+  color:var(--text);font-size:14px;outline:none}
+.row input:focus{border-color:var(--sea)}
+.row button{padding:8px 16px;border:none;background:linear-gradient(135deg,var(--sea),var(--sea2));
+  color:#fff;border-radius:9px;cursor:pointer;font-size:14px;font-weight:600}
+.row button.ghost{background:var(--card);color:var(--text);border:1px solid var(--line)}
+.exps{list-style:none;font-size:14px}
+.exps li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.exps li button{border:none;background:none;color:var(--danger);cursor:pointer;font-size:13px}
+
+/* 清单 */
+ul.check{list-style:none;padding:0}
+ul.check li{display:flex;align-items:flex-start;gap:11px;padding:9px 2px;border-bottom:1px dashed var(--line);
+  font-size:14px;cursor:pointer;user-select:none}
+ul.check li:last-child{border-bottom:none}
+ul.check li.done span{text-decoration:line-through;color:var(--faint)}
+ul.check input{appearance:none;-webkit-appearance:none;width:19px;height:19px;flex:none;margin-top:3px;
+  border:2px solid var(--line);border-radius:6px;cursor:pointer;transition:.15s;background:var(--card)}
+ul.check input:checked{background:var(--sea);border-color:var(--sea)}
+ul.check input:checked::after{content:"✓";display:block;color:#fff;font-size:13px;line-height:15px;text-align:center}
+
+.emergency{background:var(--card);border:2px solid var(--danger);border-radius:14px;padding:16px;margin-top:12px}
+.foot{text-align:center;color:var(--faint);font-size:12px;margin-top:30px;line-height:1.9}
+#toTop{position:fixed;right:16px;bottom:20px;z-index:40;box-shadow:var(--shadow);padding:9px 15px;border-radius:999px}
+
+@media (max-width:520px){
+  .hero h1{font-size:22px}
+  .wrap{padding:0 11px 60px}
+  section{padding:16px}
+}
+@media print{
+  .topbar,#toTop,#prog{display:none!important}
+  section{break-inside:avoid;box-shadow:none}
+  details{break-inside:avoid}
+  details:not([open]) .body{display:block!important}
+  .hero{border-radius:0}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div class="topbar">
+  <nav>
+    <a href="#overview">结论</a><a href="#weather">天气</a><a href="#plan">总览</a>
+    <a href="#days">每日</a><a href="#transit">交通</a><a href="#local">在地</a>
+    <a href="#safety">安全</a><a href="#budget">预算</a><a href="#checklist">清单</a>
+  </nav>
+  <button class="btn" id="themeBtn">暗色</button>
+</div>
+
+<div class="hero">
+  <div class="inner">
+    <div class="kicker">TRAVEL HANDBOOK · TODO:年份/季节</div>
+    <h1>带{人群}游{目的地}的<br>{天数}天{主题}手册</h1>
+    <div class="sub">📅 TODO:日期区间（N天N晚）　·　👥 TODO:人数与关系　·　🏨 TODO:住宿位置（已订/待订）　·　🚄 TODO:大交通方式</div>
+    <div class="chips">
+      <span>TODO:亮点1</span><span>TODO:亮点2</span><span>TODO:亮点3</span><span>💰 人均 TODO 元（口径 TODO）</span>
+    </div>
+    <div class="cd" id="countdown">📆 计算中…</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<section id="overview">
+  <h2>一句话怎么玩</h2>
+  <p>TODO:核心玩法 + 节奏承诺（每天 1 个主区域）</p>
+  <div class="callout warn">⚠️ <b>三个最大风险</b>：TODO —— <b>应对</b>：TODO</div>
+  <div class="callout info">👥 这份攻略给谁做的：TODO:人数与关系、出发日、预算口径、住宿、大交通、落地交通方式</div>
+</section>
+
+<section id="weather">
+  <h2>天气与穿搭</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>日期</th><th>天气</th><th>气温</th><th>对行程影响</th></tr></thead>
+      <tbody>
+        <tr><td>Day1</td><td>TODO</td><td>TODO <span class="tag t-ok">实查</span></td><td>TODO</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout info">📊 <b>交叉验证</b>：TODO:常年同期 vs 今年预报差异</div>
+  <div class="callout ok">🧥 <b>穿搭要点</b>：TODO:温差 / 风 / 雨具 / 温泉泳具 / 防滑鞋</div>
+  <div class="callout warn">出发前 48h 复查天气终版（15 天外预报仅参考精度）</div>
+</section>
+
+<section id="plan">
+  <h2>路线总览</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>日期</th><th>主区域</th><th>核心安排</th><th>风险 / 单程</th></tr></thead>
+      <tbody>
+        <tr><td><b>Day1</b> TODO</td><td>TODO</td><td>TODO</td><td>TODO｜TODOmin</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 六天/全天数方位总览（L4 示意图，可按需保留或删除） -->
+  <div class="rmap">
+    <div class="rmap-top"><b>🗺️ 全程方位总览</b><span class="meta">住处为锚点 · 每天只走一个方向 · 无折返</span></div>
+    <div class="rmap-board">
+      <div class="sea-tag">TODO:方位标注（如「XX海（海）← 西｜内陆 → 东」）</div><div class="compass">N</div>
+      <div class="rmap-chain">
+        <div class="rnode home"><i>🏠</i><b>TODO:住处</b><em>大本营</em></div>
+        <div class="rlink"><span class="k">TODOkm</span><span class="m">TODOmin</span></div>
+        <div class="rnode"><i>📍</i><b>TODO:片区①</b><em>DayN</em></div>
+        <div class="rlink"><span class="k">TODOkm</span><span class="m">TODOmin</span></div>
+        <div class="rnode"><i>📍</i><b>TODO:片区②</b><em>DayN</em></div>
+      </div>
+      <div class="rmap-back">↩︎ 每天日落后原路 <b>直达回住处</b>，不去第二个方向</div>
+    </div>
+    <div class="rmap-foot">方位示意图 · 按实查里程与方位绘制（非真实路网截图）</div>
+  </div>
+  <div class="callout info">方位关系：TODO:住处 → 各片区（写明方向 + 实查 km / min），<b>一天只走一个方向，不折返</b>。</div>
+</section>
+
+<section id="days">
+  <h2>每日行程</h2>
+
+  <!-- data-date 用于「今天」自动定位；不用可删 -->
+  <details open data-date="2026-01-01">
+    <summary><span class="dbadge">D1</span><span class="dtheme">TODO:主区域</span><span class="dchip">TODO:日期</span><span class="dchip">TODO:天气</span></summary>
+    <div class="body">
+      <p><b>今日主线：</b>TODO:一句话</p>
+
+      <!-- ===== 路线图二选一：删掉不适用的那块 ===== -->
+
+      <!-- A. L1/L2 真实地图截图（有权威坐标、采集成功时用） -->
+      <div class="routemap">
+        <img src="routes/final/final-Day1.png" alt="Day1 全天路线（高德真实地图）">
+        <div class="cap">Day1 全天路线 · 高德真实地图 · 路程照抄面板读数，当天以手机导航为准</div>
+      </div>
+
+      <!-- B. L4 固定方位示意图（无真实截图时用；节点链必须闭环回住处，返程日到「到家」）
+           节点数建议 ≤5 个，多了手机上会横向溢出、末端看不到 -->
+      <div class="rmap">
+        <div class="rmap-top"><b>📍 Day1 路线 · TODO:起点 → 终点</b><span class="meta">TODO:往返 X km · 单程 Y min · 末段回住处／到家</span></div>
+        <div class="rmap-board">
+          <div class="sea-tag">TODO:方位标注</div><div class="compass">N</div>
+          <div class="rmap-chain">
+            <div class="rnode home"><i>🏠</i><b>TODO:起点</b><em>TODO:出发时间</em></div>
+            <div class="rlink"><span class="k">TODOkm</span><span class="m">TODOmin</span></div>
+            <div class="rnode"><i>📍</i><b>TODO:站点①</b><em>TODO:时间</em></div>
+            <div class="rlink"><span class="k">TODOkm</span><span class="m">TODOmin</span></div>
+            <div class="rnode home"><i>🏠</i><b>TODO:回住处</b><em>TODO:时间</em></div>
+          </div>
+          <div class="rmap-back">↩︎ TODO:返程段 <b>X km / Y min</b>　·　🚕 单程 ¥TODO</div>
+        </div>
+        <div class="rmap-foot">方位示意图 · 按实查里程与方位绘制（非真实路网截图） · 当天以手机导航为准　<a href="https://uri.amap.com/navigation?from=TODO起&to=TODO终&mode=car&callnative=0" target="_blank">高德导航 ↗</a></div>
+      </div>
+
+      <div class="scroll">
+        <table>
+          <thead><tr><th>时间</th><th>安排</th><th>怎么去 / 费用</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>TODO</td><td>TODO</td><td>TODO <span class="tag t-ok">实查</span></td><td>TODO</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ===== 一日自足四件套：三餐 / 预算小计 / 避雷 / 强度 ===== -->
+      <div class="callout eat">
+        <b>🍽️ 今日三餐</b>（当天吃什麼、去哪个时段、一句避雷，全部写在这里）
+        <table>
+          <thead><tr><th>餐</th><th>店 / 品类</th><th>人均</th><th>去哪个时段</th><th>避雷</th></tr></thead>
+          <tbody>
+            <tr><td>早</td><td>TODO:店名 · 品类</td><td>¥TODO</td><td>TODO:7:00 前</td><td>TODO:先问价</td></tr>
+            <tr><td>午</td><td>TODO</td><td>¥TODO</td><td>TODO:11:30 前到</td><td>TODO</td></tr>
+            <tr><td>晚</td><td>TODO</td><td>¥TODO</td><td>TODO:17:30 前到</td><td>TODO</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>💰 <b>今日预算小计</b>：人均 ¥TODO（吃 ¥TODO + 行 ¥TODO + 门票 ¥TODO）</p>
+      <p>⚠️ <b>今日避雷</b>：TODO:当天才涉及的坑（如"14:20 开始涨潮，13:30 必须上岸"）</p>
+      <p>🚶 <b>今日强度</b>：步行约 TODO km · 连续户外 TODO 小时（带老人小孩必写）</p>
+      <p>🎫 <b>今日预订提醒</b>：TODO:需提前 N 天订的（没有就删这行）</p>
+      <p>🗑️ <b>可删减</b>：TODO:删什么（优先删下午第二段、有台阶的项目）</p>
+      <p>🔄 <b>备选</b>：TODO:雨天 / 疲劳换成什么</p>
+      <p>🧓 <b>老人提示</b>：TODO:仅带老人时写，否则删</p>
+    </div>
+  </details>
+
+  <!-- TODO: 每个 Day 复制一份 details：改 D 序号、data-date、四个 chip、路线图块、表格 -->
+
+</section>
+
+<section id="transit">
+  <h2>交通衔接</h2>
+  <h3>🚄 大交通</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>出发地</th><th>车次 / 班次</th><th>时刻</th><th>耗时</th><th>价格</th></tr></thead>
+      <tbody>
+        <tr><td>TODO</td><td>TODO</td><td>TODO</td><td>TODO</td><td>TODO <span class="tag t-ok">实查</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">🎫 <b>预订窗口</b>：TODO:开售提前天数 / 抢票建议 / 未订项标「待订」</div>
+
+  <h3>🚕 当地交通</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>路段</th><th>距离</th><th>耗时</th><th>参考费用</th></tr></thead>
+      <tbody>
+        <tr><td>TODO</td><td>TODO</td><td>TODO</td><td>TODO <span class="tag t-ok">实查</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">🚕 <b>打车建议</b>：TODO:人均车费 / 包车对比 / 返程叫车风险 / 别坐黑车</div>
+
+  <h3>📍 地点导航（点开即用）</h3>
+  <p>
+    TODO:每个地点按此格式一行
+    📍 <a href="https://uri.amap.com/search?keyword=TODO地名&callnative=0" target="_blank">TODO地名</a>
+  </p>
+</section>
+
+<section id="local">
+  <h2>在地怎么玩 / 怎么吃</h2>
+  <h3>⭐ TODO:主题玩法（温泉 / 滑雪 / 赶海 / 徒步…）</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>场所 / 项目</th><th>位置</th><th>参考价</th><th>提示</th></tr></thead>
+      <tbody>
+        <tr><td>TODO</td><td>TODO</td><td>TODO <span class="tag t-ok">实查</span></td><td>TODO</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>🍽️ 怎么吃</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>项目</th><th>市场 / 本地价</th><th>景区 / 饭店价</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>TODO</td><td>TODO <span class="tag t-ref">参考</span></td><td>TODO</td><td>TODO</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">⚠️ <b>避坑</b>：TODO:称重 / 先问价 / 拒拉客 / 旺季上浮</div>
+
+  <!-- 有潮汐/雪况/花期等时效数据时保留，否则删 -->
+  <h3>🌊 关键时效数据表</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>日期</th><th>关键时点</th><th>数值</th><th>强弱（条形示意）</th><th>最佳窗口</th><th>评价</th></tr></thead>
+      <tbody>
+        <tr><td>TODO</td><td>TODO</td><td>TODO</td><td><div class="tbar"><div class="track"><div class="fill" style="width:100%"></div></div>TODO</div></td><td>TODO</td><td>TODO</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="callout info">数据来源 TODO · <span class="tag t-ok">实查</span> 时间 TODO。出发前 48h 复查一次。</p>
+</section>
+
+<section id="safety">
+  <h2>安全卡（建议打印）</h2>
+  <div class="emergency">
+    <div class="scroll">
+      <table>
+        <thead><tr><th>事项</th><th>信息</th></tr></thead>
+        <tbody>
+          <tr><td>急救 / 报警</td><td>120 / 110（可加当地区号）</td></tr>
+          <tr><td>最近医院与药房</td><td>TODO 或 <span class="tag t-tbd">待复查</span></td></tr>
+          <tr><td>过敏与肠胃</td><td>TODO</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout danger">TODO:头号风险（如赶海涨潮 / 温泉时长 / 海边风大 / 台阶量）</div>
+    <div class="callout danger">TODO:第二风险（老人相关）</div>
+    <div class="callout warn">🧥 TODO:温差与风、末日晚间低温提醒</div>
+  </div>
+</section>
+
+<section id="budget" data-budget="0">
+  <h2>预算账本</h2>
+  <div class="budget">
+    <div class="item"><b id="bTotal">—</b><span>总预算(元)</span></div>
+    <div class="item"><b id="bSpent">0</b><span>已花</span></div>
+    <div class="item"><b id="bLeft">—</b><span>剩余</span></div>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>项目</th><th>人均(元)</th><th>合计(元)</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>TODO:交通</td><td>TODO</td><td>TODO</td><td>TODO</td></tr>
+        <tr><td><b>合计</b></td><td><b>TODO</b></td><td><b>TODO</b></td><td>TODO</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout info">合计口径：TODO:含 / 不含住宿、是否含大交通。未设上限时按<b>实查区间</b>给，不硬套总额。</div>
+  <div class="row">
+    <input id="expName" placeholder="项目">
+    <input id="expAmt" type="number" placeholder="金额" style="width:110px">
+    <button onclick="addExpense()">记一笔</button>
+  </div>
+  <ul class="exps" id="expList"></ul>
+</section>
+
+<section id="checklist">
+  <h2>出发前时间线（可勾选，关页不丢）</h2>
+
+  <h3>🔴 立即</h3>
+  <ul class="check"><li><input type="checkbox"><span>TODO:买往返票 / 订住宿 / 买票券</span></li></ul>
+
+  <h3>🟡 出发前 7 天</h3>
+  <ul class="check"><li><input type="checkbox"><span>TODO:复查天气、微调行程、确认开放时间</span></li></ul>
+
+  <h3>🟠 出发前 48 小时</h3>
+  <ul class="check"><li><input type="checkbox"><span>TODO:查关键时效数据（潮汐 / 天气终版）</span></li></ul>
+
+  <h3>🟢 出发前 1 天</h3>
+  <ul class="check"><li><input type="checkbox"><span>TODO:证件、衣物、专项装备、药品、雨具与充电</span></li></ul>
+</section>
+
+<section id="qa">
+  <h2>变化应对</h2>
+  <details><summary>下雨怎么办？</summary><div class="body"><p>TODO</p></div></details>
+  <details><summary>累了怎么办？</summary><div class="body"><p>TODO</p></div></details>
+  <details><summary>交通叫不到车怎么办？</summary><div class="body"><p>TODO</p></div></details>
+  <details><summary>关键数据变了怎么办（潮汐 / 雪况 / 花期）？</summary><div class="body"><p>TODO</p></div></details>
+  <div class="callout info">原则：只删不加，绝不硬排</div>
+</section>
+
+<p class="foot">本手册由 Journey Advisor · 途顾问 生成 · 数据实查时间 TODO<br>
+价格为实查 / 参考价，出行前请复查标「待复查」项</p>
+</div>
+
+<button class="btn" id="toTop">↑ 顶部</button>
+
+<script>
+/* 主题切换 */
+(function(){
+  var root=document.documentElement;
+  var saved=localStorage.getItem('tgm-theme');
+  if(!saved){ saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light'; }
+  apply(saved);
+  document.getElementById('themeBtn').addEventListener('click',function(){
+    var next = root.dataset.theme==='dark' ? 'light':'dark';
+    apply(next); localStorage.setItem('tgm-theme',next);
+  });
+  function apply(t){
+    if(t==='dark'){root.dataset.theme='dark';document.getElementById('themeBtn').textContent='亮色';}
+    else{delete root.dataset.theme;document.getElementById('themeBtn').textContent='暗色';}
+  }
+})();
+
+/* 倒计时 / 今天第几天：按 details[data-date] 自动定位并展开
+   TODO: 把下面 start / end 改成实际行程首尾日期 */
+(function(){
+  var el=document.getElementById('countdown');
+  var days=document.querySelectorAll('details[data-date]');
+  var today=new Date(); today.setHours(0,0,0,0);
+  var start=new Date(2026,0,1), end=new Date(2026,0,1);   /* ← TODO 改这里 */
+  var found=false;
+  days.forEach(function(d){
+    var p=d.dataset.date.split('-');
+    var cur=new Date(+p[0],+p[1]-1,+p[2]);
+    if(cur.getTime()===today.getTime()){
+      d.open=true; found=true;
+      var chip=document.createElement('span');
+      chip.className='dchip today'; chip.textContent='今天';
+      d.querySelector('summary').appendChild(chip);
+      d.scrollIntoView({block:'center'});
+    }
+  });
+  if(found){ el.textContent='📍 今天是行程中的一天，已自动定位到当日'; }
+  else if(today<start){
+    el.textContent='📆 距出发还有 '+Math.round((start-today)/86400000)+' 天';
+  } else if(today>end){
+    el.textContent='📆 行程已结束 · 数据实查于 TODO';
+  } else { el.textContent='📆 TODO:日期区间'; }
+})();
+
+/* 滚动进度 + 导航高亮 */
+(function(){
+  var prog=document.getElementById('prog');
+  var links=[].slice.call(document.querySelectorAll('.topbar nav a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
+  window.addEventListener('scroll',function(){
+    var h=document.documentElement;
+    prog.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+    var idx=-1;
+    secs.forEach(function(s,i){ if(s && s.getBoundingClientRect().top<=90) idx=i; });
+    links.forEach(function(a,i){ a.classList.toggle('on', i===idx); });
+  },{passive:true});
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'})});
+})();
+
+/* 清单记忆（关页不丢）；点整行也能勾 */
+(function(){
+  var lists=document.querySelectorAll('ul.check');
+  lists.forEach(function(ul,li){
+    var items=ul.querySelectorAll('li');
+    var saved=JSON.parse(localStorage.getItem('tgm-cl-'+li)||'[]');
+    items.forEach(function(el,i){
+      var cb=el.querySelector('input');
+      cb.checked=!!saved[i]; el.classList.toggle('done',cb.checked);
+      el.addEventListener('click',function(e){ if(e.target!==cb){ cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); } });
+      cb.addEventListener('change',function(){
+        el.classList.toggle('done',cb.checked);
+        var s=[]; items.forEach(function(x){s.push(x.querySelector('input').checked)});
+        localStorage.setItem('tgm-cl-'+li,JSON.stringify(s));
+      });
+    });
+  });
+})();
+
+/* 记账 */
+var total=parseFloat(document.getElementById('budget').dataset.budget)||0;
+function exps(){ return JSON.parse(localStorage.getItem('tgm-exp')||'[]'); }
+function refresh(){
+  var arr=exps();
+  var spent=arr.reduce(function(a,b){return a+b.amt},0);
+  document.getElementById('bTotal').textContent=total||'—';
+  document.getElementById('bSpent').textContent=spent;
+  document.getElementById('bLeft').textContent=(total?Math.max(0,total-spent):'—');
+  var ul=document.getElementById('expList'); ul.innerHTML='';
+  arr.forEach(function(e,i){
+    var li=document.createElement('li');
+    var l=document.createElement('span'); l.textContent=e.name+' ¥'+e.amt;
+    var b=document.createElement('button'); b.textContent='删除';
+    b.onclick=function(){ var a=exps(); a.splice(i,1); localStorage.setItem('tgm-exp',JSON.stringify(a)); refresh(); };
+    li.appendChild(l); li.appendChild(b); ul.appendChild(li);
+  });
+}
+function addExpense(){
+  var n=document.getElementById('expName').value.trim();
+  var a=parseFloat(document.getElementById('expAmt').value);
+  if(!n||!a) return;
+  var arr=exps(); arr.push({name:n,amt:a});
+  localStorage.setItem('tgm-exp',JSON.stringify(arr));
+  document.getElementById('expName').value=''; document.getElementById('expAmt').value='';
+  refresh();
+}
+
+/* 打印/导出 PDF 前展开全部折叠块，避免每日行程被吞掉 */
+window.addEventListener('beforeprint',function(){
+  document.querySelectorAll('details').forEach(function(d){ d.dataset.was=d.open?'1':''; d.open=true; });
+});
+window.addEventListener('afterprint',function(){
+  document.querySelectorAll('details').forEach(function(d){ d.open=d.dataset.was==='1'; });
+});
+
+refresh();
+</script>
+</body>
+</html>
